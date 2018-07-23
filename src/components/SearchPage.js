@@ -5,29 +5,31 @@ import {Link} from 'react-router-dom';
 import * as _ from 'lodash';
 
 class SearchPage extends Component{
-  state = {query:'', books: [], errorMsg:''}
-  updateQuery = (query) => {
-    let item = query.target.value;
-    if(item){
-      BooksAPI.search(item, 100).then( (results) => {
+ 
+  state = {query:'', books: [], errorMsg:''};
+
+  updateQuery = ()=>{
+    if(this.state.query){
+      BooksAPI.search(this.state.query, 100).then((results) => {
         if(results.hasOwnProperty('error')){
-        	this.setState({query:item, books: [], errorMsg: 'Error occured, please try another author or title.'});
+        	this.setState({ books: [], errorMsg: 'Error occured, please try another author or title.'});
          }
          else{
-            this.setState({query:item, books: results.filter( itx => itx.hasOwnProperty('imageLinks')), errorMsg: ''});  
+            this.setState({books: results.filter( itx => itx.hasOwnProperty('imageLinks')), errorMsg: ''});  
          }
       }).catch( (err) => {
-        this.setState({query:item, books: [], errorMsg: 'Error occured, contact adminstrator or try another search term.'})});
+        this.setState({books: [], errorMsg: 'Error occured, contact adminstrator or try another search term.'})});
       
     }
     else{
-      this.setState({query:'', books: [], errorMsg: ''});
+      this.setState({query: '', books: [], errorMsg: ''});
     }
   };
 
-handleTextChange = (event) => {
-	this.updateQuery(event);   
-};
+runSearch = _.debounce(() => this.updateQuery(this.state.query), 300);
+handleTextChange = (event) =>{
+  this.setState({query: event.target.value}, ()=> {this.runSearch()});    
+}
   	
   render(){
     const {addBook, bookShelfList} = this.props;
@@ -53,9 +55,7 @@ handleTextChange = (event) => {
             <div className="search-books-bar">
               <Link className="close-search" to="/">Close</Link>
               <div className="search-books-input-wrapper">
-				<form onSubmit={this.handleSubmit}>
                    <input type="text" placeholder="Search by title or authors" value={this.state.query} onChange={this.handleTextChange}/>
-				</form>
               </div>
             </div>
             <div className="search-books-results">
